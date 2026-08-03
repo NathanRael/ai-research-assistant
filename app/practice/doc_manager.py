@@ -1,15 +1,19 @@
 from pathlib import Path
+from typing import Optional
 
 from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
+
+DEFAULT_DOC_PATH = "../data"
 
 class DocManager:
     def __init__(self):
         pass
 
     @staticmethod
-    def load_documents(path: str) -> list[Document]:
+    def load_documents(path: Optional[str] = DEFAULT_DOC_PATH) -> list[Document]:
         documents = []
         data_path = Path(path)
 
@@ -36,3 +40,13 @@ class DocManager:
                 )
 
         return documents
+
+
+    @staticmethod
+    def split_documents(documents: list[Document]) -> list[Document]:
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=100,
+            length_function=len,
+        )
+        return splitter.split_documents(documents)
