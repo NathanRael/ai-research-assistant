@@ -5,8 +5,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
-
-DEFAULT_DOC_PATH = "../data"
+DEFAULT_DOC_PATH = Path(__file__).resolve().parent.parent.parent / "data"
 
 class DocManager:
     def __init__(self):

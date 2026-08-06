@@ -214,3 +214,18 @@ class ChatOpenCode(BaseChatModel):
             run_manager=run_manager,
             **merged_kwargs,
         )
+
+    def bind_tools(
+        self,
+        tools: list,
+        tool_choice: Optional[str] = None,
+        **kwargs: Any,
+    ) -> BaseChatModel:
+        return self.client.bind_tools(tools, tool_choice=tool_choice, **kwargs)
+
+    def with_structured_output(
+        self,
+        schema: Any,
+        **kwargs: Any,
+    ) -> BaseChatModel:
+        return self.client.with_structured_output(schema, **kwargs)

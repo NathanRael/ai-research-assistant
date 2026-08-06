@@ -26,12 +26,19 @@ def index_documents():
     check_ollama()
     print("Loading documents...")
     docs = DocManager.load_documents()
+    print(f"Loaded {len(docs)} documents")
+    if not docs:
+        raise SystemExit("No documents found. Add PDF/TXT files to the data directory.")
     print("Indexing documents...")
     vs = VectorStore()
     vs.clear_database()
     chunks = DocManager().split_documents(docs)
-    vs.add_documents(chunks)
-    print(f"{len(chunks)} chunks saved...")
+    print(f"Split into {len(chunks)} chunks")
+    if chunks:
+        vs.add_documents(chunks)
+        print(f"{len(chunks)} chunks saved...")
+    else:
+        print("No chunks to save.")
 
 
 # -----------------------------

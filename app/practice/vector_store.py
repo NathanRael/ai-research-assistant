@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from langchain_chroma import Chroma
@@ -5,8 +6,8 @@ from langchain_core.documents import Document
 
 from app.practice.embedding import Embeder
 
-DEFAULT_DIR = "../storage"
-
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_DIR = PROJECT_ROOT / "storage"
 
 class VectorStore:
     def __init__(self, directory: Optional[str] = DEFAULT_DIR):

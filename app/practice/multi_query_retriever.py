@@ -143,7 +143,7 @@ def multi_query_retriever(question):
     print("Result")
 
     for i, doc in enumerate(docs[:2]):
-        print(f"\n{i+1} [{doc.metadata.get("type","N/A")}]  {doc.page_content}")
+        print(f"\n{i+1} [{doc.metadata.get("type","N/A")} ]  {doc.page_content}")
 
 
 

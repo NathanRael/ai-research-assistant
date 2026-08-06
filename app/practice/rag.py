@@ -1,18 +1,11 @@
-from pprint import pprint
-from typing import Optional
-
+from langchain.agents import create_agent
+from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 
+from app.chat_opencode import OpenCodeModel, ChatOpenCode
+from app.config import settings
 from app.practice.vector_store import VectorStore
-from deepagents import create_deep_agent
-from langchain.tools import tool
-
-
-models = {
-    "qwen" : "ollama:qwen3.5:9b",
-    "ornith" : "ollama:ornith:9b",
-    "gemma" : "ollama:gemma4:e2b",
-}
+from deep_translator import GoogleTranslator
 
 PROMPT = """
 You are a document question-answering assistant.
@@ -20,26 +13,13 @@ You are a document question-answering assistant.
 Your job is to answer questions about the provided documents.
 
 Rules:
-1. Always use the search_information tool before answering document questions.
-2. Answer the user's question directly while using his query language (ex : fr, en). Do not give unnecessary summaries.
-3. Use ONLY information found in the retrieved documents.
-4. Never invent information.
-6. Answer in the same language as the user's question.
-7. Do not ask follow-up questions or offer additional help.
-8. Always include the source and page when available.
+- Answer on the user language (ex : in french, english,...)
+- If no relevant information found, just reply that you do not have information
 
-Example:
 
-Question:
-"Quel est l'objectif du contrat ?"
-
-Good answer:
-"L'objectif du contrat est la réalisation de prestations de services entre BCI France et le prestataire. (Source: contrat.pdf, page X)"
-
-Bad answer:
-"Here is a contract overview..."
-"Would you like me to help with..."
+Answer using bullets for explanation and raw text format (DO NOT USE ANY MD FORMAT)
 """
+
 
 @tool(parse_docstring=True)
 def search_information(query: str) -> str:
@@ -53,7 +33,7 @@ def search_information(query: str) -> str:
            Matching document chunks with their source metadata, or a message if
            no relevant documents are found.
        """
-    contexts = VectorStore().search(query, top_k=3)
+    contexts = VectorStore().search(query, top_k=5)
     if not contexts:
         return "No relevant documents found in the knowledge base"
     contexts_string = ""
@@ -65,16 +45,18 @@ def search_information(query: str) -> str:
 
 
 class RagPipeline:
-    def __init__(self, model : Optional[str] = models.get("qwen")):
-        self.agent = create_deep_agent(
+    def __init__(self, model: OpenCodeModel = OpenCodeModel.KIMI_K26):
+        model = ChatOpenCode(api_key=settings.opencode_api_key, model_name=model)
+        self.agent = create_agent(
             model=model,
             system_prompt=PROMPT,
-            tools=[search_information]
+            tools=[search_information],
         )
 
     def query(self, query: str):
+        translated = GoogleTranslator(source="auto", target="fr").translate(query)
         result = self.agent.invoke(
-            {"messages": [HumanMessage(content=query)]}
+            {"messages": [HumanMessage(content=translated)]}
         )
         messages = result.get("messages", [])[-1].content
         return messages
@@ -82,5 +64,5 @@ class RagPipeline:
 
 if __name__ == "__main__":
     rag = RagPipeline()
-    result = rag.query("Quel est l'objectif du contrat  ?")
-    pprint(result)
+    result = rag.query("What's the role of the contractor ?")
+    print(result)
