@@ -5,18 +5,34 @@ build/
 dist/
 wheels/
 *.egg-info
+*.egg
 
 # Virtual environments
-.venv
+.venv/
+env/
 
 # Environment variables
 .env
+.env.local
 
-# Qdrant data
-qdrant_storage/
-
-# Uploaded data
+# User data and generated storage
+storage/
 data/
+qdrant_storage/
 
 # IDE
 .idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AI assistant config
+.claude/
+.agents/
+
+# uv
+# uv.lock is tracked for reproducible builds
