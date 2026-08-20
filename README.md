@@ -36,6 +36,8 @@ uv run python -m app.cli.main
 airesearch
 ```
 
+For detailed installation and usage instructions, see the [Getting Started guide](docs/getting-started.md).
+
 ## Configuration
 
 Run the interactive setup wizard from inside the assistant:

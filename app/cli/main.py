@@ -1,6 +1,8 @@
 """Interactive CLI for the personal AI assistant."""
 
+import argparse
 import ctypes
+import importlib.metadata
 import json
 import re
 import sys
@@ -10,6 +12,11 @@ from dataclasses import dataclass
 
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import BaseMessage, HumanMessage
+
+try:
+    __version__ = importlib.metadata.version("ai-research-assistant")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.2.0"
 
 from app.agents.automation_agent import AutomationAgent
 from app.agents.user_context_agent import UserContextAgent
@@ -306,6 +313,26 @@ def _handle_command(user_input: str, services: Services, debug: bool) -> bool:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="airesearch",
+        description="Multi-agent CLI personal assistant with web search, document memory, and automation.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+    parser.add_argument(
+        "--config-dir",
+        action="store_true",
+        help="Print the user data directory and exit",
+    )
+    args = parser.parse_args()
+
+    if args.config_dir:
+        print(storage_dir().parent)
+        return
+
     _setup_console()
     _setup_history()
     _print_banner()
