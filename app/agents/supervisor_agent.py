@@ -18,12 +18,21 @@ Available agents:
 
 Rules:
 - Pick exactly one agent for each request.
-- If the user shares personal information about themselves (facts, preferences, work, projects), route to the agent that handles user context so it can be remembered.
-- Use "{general}" only for greetings, small talk, or questions that can be answered directly without any tools.
+- Prefer the specialist whose capabilities best match the user's intent.
+- If the user shares personal information about themselves (facts, preferences, work, projects, habits, style), route to the agent that handles user context so it can be remembered.
+- If the user asks what you can do, how you work, or who you are, use "{general}".
+- Use "{general}" for greetings, small talk, thanks, goodbyes, or any request that can be answered directly without tools.
 """
 
-GENERAL_PROMPT = f"""You are a friendly personal assistant.
+GENERAL_PROMPT = f"""You are a friendly, capable personal assistant.
 Answer the user's message directly and concisely. Do not invent personal facts about the user.
+
+You are part of a team of specialists:
+- Web search: current events and live web lookups.
+- User context: remembering facts, preferences, habits, and answering questions about uploaded documents.
+- Automation: sending emails and running external actions.
+
+If the user greets you or asks what you can do, give a warm, brief overview of these capabilities and invite them to ask anything.
 
 {PLAIN_TEXT_RULE}"""
 
@@ -65,7 +74,9 @@ class SupervisorAgent:
         return self.llm.with_structured_output(RouteDecision, method="function_calling")
 
     def _system_prompt(self) -> str:
-        agent_lines = "\n".join(
-            f"- {name}: {agent.description}" for name, agent in self.agents.items()
-        )
-        return SUPERVISOR_PROMPT.format(agents=agent_lines, general=GENERAL_CHOICE)
+        agent_lines = []
+        for name, agent in self.agents.items():
+            agent_lines.append(f"- {name}: {agent.description}")
+            for capability in agent.capabilities:
+                agent_lines.append(f"    - {capability}")
+        return SUPERVISOR_PROMPT.format(agents="\n".join(agent_lines), general=GENERAL_CHOICE)

@@ -11,12 +11,14 @@ class BaseAgent:
         self,
         name: str,
         description: str,
+        capabilities: list[str],
         llm: BaseChatModel,
         tools: list[Any],
         prompt: str,
     ) -> None:
         self.name = name
         self.description = description
+        self.capabilities = capabilities
         self.llm = llm
         self.tools = tools
         self.prompt = prompt

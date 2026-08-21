@@ -64,6 +64,13 @@ class UserContextAgent(BaseAgent):
                 "Stores and recalls personal information about the user "
                 "and answers questions about the user's documents."
             ),
+            capabilities=[
+                "Remember user facts, preferences, habits, writing style, and recurring workflows.",
+                "Update the structured user profile (name, profession, skills, goals, etc.).",
+                "Save and retrieve free-form memories about the user.",
+                "Answer questions about uploaded documents.",
+                "List available uploaded documents.",
+            ],
             llm=llm,
             tools=(
                     create_memory_tools(memory_service)

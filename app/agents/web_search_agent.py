@@ -26,6 +26,11 @@ class WebSearchAgent(BaseAgent):
         super().__init__(
             name="web_search",
             description="Answers questions that need up-to-date information from the internet.",
+            capabilities=[
+                "Search the live web for current events, facts, and recent information.",
+                "Summarize search results with sources.",
+                "Answer time-sensitive questions.",
+            ],
             llm=llm,
             tools=[create_search_web_tool(search_client)],
             prompt=PROMPT,

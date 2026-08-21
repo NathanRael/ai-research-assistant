@@ -21,6 +21,11 @@ class AutomationAgent(BaseAgent):
         super().__init__(
             name="automation",
             description="Performs external actions such as sending emails or triggering APIs.",
+            capabilities=[
+                "Send emails via configured SMTP.",
+                "Execute external actions and automations on behalf of the user.",
+                "Ask for missing details before acting.",
+            ],
             llm=llm,
             tools=create_automation_tools(email_service),
             prompt=PROMPT,
