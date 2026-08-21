@@ -18,7 +18,19 @@ def create_search_web_tool(client: WebSearchClient) -> BaseTool:
 
     @tool
     def search_web(query: str) -> str:
-        """Search the web for up-to-date information relevant to the query."""
-        return _format_results(client.search(query))
+        """Search the web for up-to-date information relevant to the query.
+
+        Use a single optimized query. Only run additional searches if the first
+        result set is clearly insufficient.
+        """
+        try:
+            results = client.search(query)
+        except Exception as exc:
+            return (
+                "The search service is currently unavailable. "
+                f"Error: {exc}\n"
+                "Please try again in a moment or ask without web search."
+            )
+        return _format_results(results)
 
     return search_web

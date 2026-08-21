@@ -3,6 +3,7 @@ import textwrap
 from typing import Optional, TypedDict
 
 import httpx
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.config import settings
 
@@ -46,7 +47,7 @@ class WebSearchClient:
         if freshness:
             payload["freshness"] = freshness
 
-        response = httpx.post(
+        response = self._post_with_retry(
             url=f"{self.search_url}/web-search",
             headers=self.headers,
             json=payload,
@@ -67,6 +68,22 @@ class WebSearchClient:
             }
             for result in filtered
         ]
+
+    @retry(
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=2, max=20),
+        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.NetworkError, httpx.TimeoutException)),
+        reraise=True,
+    )
+    def _post_with_retry(self, **kwargs) -> httpx.Response:
+        response = httpx.post(**kwargs)
+        if response.status_code == 429:
+            # Let tenacity retry with exponential backoff; raise so wait is applied.
+            response.raise_for_status()
+        # Retry server errors and temporary errors, but not client errors like 401/403.
+        if response.status_code >= 500 or response.status_code in {408, 502, 503, 504}:
+            response.raise_for_status()
+        return response
 
 
 def run_test():
