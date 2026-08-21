@@ -4,8 +4,8 @@ from pathlib import Path
 
 from langchain_core.documents import Document
 
-from app.practice.doc_manager import DocManager
-from app.practice.vector_store import VectorStore
+from app.services.document_loader import DocManager
+from app.services.vector_store import VectorStore
 
 
 @dataclass

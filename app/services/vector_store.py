@@ -3,7 +3,7 @@ from typing import Optional
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
-from app.practice.embedding import Embeder
+from app.services.embedding import Embeder
 from app.user_data import storage_dir
 
 

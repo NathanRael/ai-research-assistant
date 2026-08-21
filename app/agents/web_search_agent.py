@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from langchain_core.language_models import BaseChatModel
 
 from app.agents.base_agent import BaseAgent
@@ -5,10 +7,14 @@ from app.agents.prompts import PLAIN_TEXT_RULE
 from app.tools.search_tools import create_search_web_tool
 from app.tools.web_search_client import WebSearchClient
 
+current_date = datetime.now().strftime("%Y-%m-%d")
+
 PROMPT = f"""You are a web search specialist.
 Use the search_web tool to find up-to-date information, then answer the user's
 question with a concise summary of the most relevant results.
 Always mention the sources you used.
+
+Current date : {current_date}
 
 {PLAIN_TEXT_RULE}"""
 

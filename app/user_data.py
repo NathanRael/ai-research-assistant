@@ -51,3 +51,8 @@ def documents_dir() -> Path:
 def log_file() -> Path:
     """Path to the debug log file."""
     return _home_dir() / "assistant.log"
+
+
+def profile_file() -> Path:
+    """Path to the structured user profile file (JSON)."""
+    return _home_dir() / "profile.json"

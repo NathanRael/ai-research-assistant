@@ -24,11 +24,12 @@ from app.agents.web_search_agent import WebSearchAgent
 from app.chat_opencode import ChatOpenCode
 from app.config import settings
 from app.graph.workflow import build_assistant_graph
-from app.practice.embedding import Embeder
-from app.practice.vector_store import VectorStore
+from app.services.embedding import Embeder
+from app.services.vector_store import VectorStore
 from app.services.document_service import DocumentService
 from app.services.email_service import EmailService, SmtpConfig
 from app.services.memory_service import MemoryService
+from app.services.user_profile_service import UserProfileService
 from app.tools.web_search_client import WebSearchClient
 from app.user_data import config_file, history_file, storage_dir
 from app.cli.setup import run_setup
@@ -131,6 +132,7 @@ class Services:
     memory: MemoryService
     documents: DocumentService
     email: EmailService
+    profile: UserProfileService
 
 
 def create_services() -> Services:
@@ -148,6 +150,7 @@ def create_services() -> Services:
                 sender=settings.smtp_sender,
             )
         ),
+        profile=UserProfileService(),
     )
 
 
@@ -155,7 +158,7 @@ def create_assistant(llm: ChatOpenCode, services: Services):
     """Build the agents and compile the assistant graph."""
     agents = [
         WebSearchAgent(llm, WebSearchClient()),
-        UserContextAgent(llm, services.memory, services.documents),
+        UserContextAgent(llm, services.memory, services.documents, services.profile),
         AutomationAgent(llm, services.email),
     ]
     return build_assistant_graph(llm, agents)

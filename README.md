@@ -86,6 +86,7 @@ OLLAMA_URL=http://localhost:11434
 All user-specific data is stored separately from the application:
 
 - **Config**: `~/.ai-research-assistant/.env`
+- **Profile**: `~/.ai-research-assistant/profile.json` (structured user facts and preferences)
 - **Storage**: `~/.ai-research-assistant/storage/` (Chroma vector store)
 - **History**: `~/.ai-research-assistant/.history` (command history)
 - **Documents**: `~/.ai-research-assistant/documents/` (optional)
@@ -103,7 +104,7 @@ You
   ↓
 SupervisorAgent (routes to the right specialist)
   ├── WebSearchAgent      → search_web tool
-  ├── UserContextAgent    → save_memory, retrieve_memory, search_documents, list_documents
+  ├── UserContextAgent    → save_memory, retrieve_memory, search_documents, list_documents, get_user_profile, update_user_profile
   └── AutomationAgent     → send_email
 ```
 
@@ -124,8 +125,7 @@ app/
 ├── agents/           # Specialist agents and supervisor
 ├── cli/              # CLI entry point and setup wizard
 ├── graph/            # LangGraph workflow
-├── practice/         # Embedding, document loading, vector store
-├── services/         # Business logic (memory, documents, email)
+├── services/         # Business logic (memory, documents, email, embeddings, vector store)
 ├── tools/            # LangChain tool factories
 ├── chat_opencode.py  # LLM adapter
 ├── config.py         # Settings
