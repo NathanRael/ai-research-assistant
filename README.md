@@ -68,6 +68,11 @@ OLLAMA_URL=http://localhost:11434
 | `SMTP_USERNAME` | No | SMTP login username |
 | `SMTP_PASSWORD` | No | SMTP login password |
 | `SMTP_SENDER` | No | Email address to send from |
+| `IMAP_HOST` | No | IMAP server for reading emails |
+| `IMAP_PORT` | No | IMAP port (default: 993) |
+| `IMAP_USERNAME` | No | IMAP login username |
+| `IMAP_PASSWORD` | No | IMAP login password |
+| `IMAP_FOLDER` | No | IMAP folder to read (default: `INBOX`) |
 
 ## CLI Commands
 
@@ -105,7 +110,7 @@ You
 SupervisorAgent (routes to the right specialist)
   ├── WebSearchAgent      → search_web tool
   ├── UserContextAgent    → save_memory, retrieve_memory, search_documents, list_documents, get_user_profile, update_user_profile
-  └── AutomationAgent     → send_email
+  └── AutomationAgent     → preview_email, send_email, preview_read_emails, read_emails
 ```
 
 Each agent uses its own tools and system prompt. The supervisor decides which agent handles each request.

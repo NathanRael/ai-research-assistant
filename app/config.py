@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_sender: str = ""
 
+    imap_host: str = ""
+    imap_port: int = 993
+    imap_username: str = ""
+    imap_password: str = ""
+    imap_folder: str = "INBOX"
+
     model_config = SettingsConfigDict(
         env_file=_ENV_FILES,
         env_file_encoding="utf-8",

@@ -148,6 +148,11 @@ def create_services() -> Services:
                 username=settings.smtp_username,
                 password=settings.smtp_password,
                 sender=settings.smtp_sender,
+                imap_host=settings.imap_host,
+                imap_port=settings.imap_port,
+                imap_username=settings.imap_username,
+                imap_password=settings.imap_password,
+                imap_folder=settings.imap_folder,
             )
         ),
         profile=UserProfileService(),
