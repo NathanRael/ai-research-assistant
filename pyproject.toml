@@ -1,5 +1,5 @@
 [project]
-name = "ai-research-assistant"
+name = "airi"
 version = "0.2.0"
 description = "Multi-agent CLI personal assistant with web search, document memory, and automation"
 readme = "README.md"
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-airesearch = "app.cli.main:main"
+airi = "app.cli.main:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -3,14 +3,14 @@
 All user-specific data (config, storage, documents, history) lives under
 a dedicated directory so the application code stays separate from user data.
 
-Default:  ~/.ai-research-assistant/
+Default:  ~/.airi/
 Override: set the AI_ASSISTANT_HOME environment variable.
 """
 
 import os
 from pathlib import Path
 
-_APP_NAME = "ai-research-assistant"
+_APP_NAME = "airi"
 
 
 def _home_dir() -> Path:

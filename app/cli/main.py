@@ -14,7 +14,7 @@ from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import BaseMessage, HumanMessage
 
 try:
-    __version__ = importlib.metadata.version("ai-research-assistant")
+    __version__ = importlib.metadata.version("airi")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "0.2.0"
 
@@ -222,7 +222,7 @@ def _spin(stop_event: threading.Event, label: str) -> None:
 def _print_banner() -> None:
     bar = _c(DIM, "─" * 62)
     print(bar)
-    print(f"  {_c(BOLD + CYAN, 'AI Research Assistant')}")
+    print(f"  {_c(BOLD + CYAN, 'airi')}")
     print(f"  {_c(DIM, 'multi-agent personal assistant')}")
     print(bar)
     print(f"  {_c(DIM, 'Type')} {_c(BOLD, '/help')} {_c(DIM, 'for commands,')} {_c(BOLD, 'exit')} {_c(DIM, 'to quit.')}")
@@ -322,7 +322,7 @@ def _handle_command(user_input: str, services: Services, debug: bool) -> bool:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="airesearch",
+        prog="airi",
         description="Multi-agent CLI personal assistant with web search, document memory, and automation.",
     )
     parser.add_argument(

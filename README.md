@@ -1,4 +1,4 @@
-# AI Research Assistant
+# airi
 
 A multi-agent CLI personal assistant powered by LangChain and LangGraph.
 Search the web, manage documents, store memories, and automate tasks — all from your terminal.
@@ -33,7 +33,7 @@ pip install -e .
 uv run python -m app.cli.main
 
 # Or after pip install -e .
-airesearch
+airi
 ```
 
 For detailed installation and usage instructions, see the [Getting Started guide](docs/getting-started.md).
@@ -46,7 +46,7 @@ Run the interactive setup wizard from inside the assistant:
 > /setup
 ```
 
-Or create a `.env` file in your user data directory (`~/.ai-research-assistant/.env`):
+Or create a `.env` file in your user data directory (`~/.airi/.env`):
 
 ```env
 OPENCODE_API_KEY=your-api-key
@@ -90,11 +90,11 @@ OLLAMA_URL=http://localhost:11434
 
 All user-specific data is stored separately from the application:
 
-- **Config**: `~/.ai-research-assistant/.env`
-- **Profile**: `~/.ai-research-assistant/profile.json` (structured user facts and preferences)
-- **Storage**: `~/.ai-research-assistant/storage/` (Chroma vector store)
-- **History**: `~/.ai-research-assistant/.history` (command history)
-- **Documents**: `~/.ai-research-assistant/documents/` (optional)
+- **Config**: `~/.airi/.env`
+- **Profile**: `~/.airi/profile.json` (structured user facts and preferences)
+- **Storage**: `~/.airi/storage/` (Chroma vector store)
+- **History**: `~/.airi/.history` (command history)
+- **Documents**: `~/.airi/documents/` (optional)
 
 Override the data directory with `AI_ASSISTANT_HOME`:
 

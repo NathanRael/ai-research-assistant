@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide explains how to run the AI Research Assistant during development, install it as a proper CLI command, configure it, and use it day-to-day.
+This guide explains how to run airi during development, install it as a proper CLI command, configure it, and use it day-to-day.
 
 ---
 
@@ -48,11 +48,11 @@ This starts the interactive REPL with the `You >` prompt.
 
 ## Install as a CLI command
 
-The project defines a console script named `airesearch` in `pyproject.toml`:
+The project defines a console script named `airi` in `pyproject.toml`:
 
 ```toml
 [project.scripts]
-airesearch = "app.cli.main:main"
+airi = "app.cli.main:main"
 ```
 
 Choose one of the installation methods below.
@@ -70,7 +70,7 @@ pip install -e .
 Then run from anywhere:
 
 ```bash
-airesearch
+airi
 ```
 
 ### Option B: Build and install the wheel
@@ -83,13 +83,13 @@ uv build
 python -m build
 
 # Install the resulting wheel
-pip install dist/ai_research_assistant-0.2.0-py3-none-any.whl
+pip install dist/airi-0.2.0-py3-none-any.whl
 ```
 
 Then run:
 
 ```bash
-airesearch
+airi
 ```
 
 ### Option C: Install with uv tools (cleanest for end users)
@@ -101,20 +101,20 @@ uv tool install .
 Then run globally:
 
 ```bash
-airesearch
+airi
 ```
 
 Update later with:
 
 ```bash
-uv tool upgrade ai-research-assistant
+uv tool upgrade airi
 ```
 
 ---
 
 ## First-time configuration
 
-When you run `airesearch` for the first time without a config file, it warns you and suggests running `/setup`.
+When you run `airi` for the first time without a config file, it warns you and suggests running `/setup`.
 
 Inside the assistant:
 
@@ -143,7 +143,7 @@ You can also create the `.env` file manually in your user data directory.
 Start the assistant:
 
 ```bash
-airesearch
+airi
 ```
 
 Ask questions naturally:
@@ -172,17 +172,17 @@ You > /debug enable
 
 ## CLI flags
 
-Because `airesearch` is a proper console script, it supports flags before entering the REPL:
+Because `airi` is a proper console script, it supports flags before entering the REPL:
 
 ```bash
 # Show help
-airesearch --help
+airi --help
 
 # Show version
-airesearch --version
+airi --version
 
 # Print the user data directory
-airesearch --config-dir
+airi --config-dir
 ```
 
 ---
@@ -208,19 +208,19 @@ All user-specific data is stored separately from the application code:
 
 | Data | Default location |
 |---|---|
-| Configuration | `~/.ai-research-assistant/.env` |
-| Vector store | `~/.ai-research-assistant/storage/` |
-| Command history | `~/.ai-research-assistant/.history` |
-| Documents cache | `~/.ai-research-assistant/documents/` |
+| Configuration | `~/.airi/.env` |
+| Vector store | `~/.airi/storage/` |
+| Command history | `~/.airi/.history` |
+| Documents cache | `~/.airi/documents/` |
 
 Override the base directory:
 
 ```bash
 export AI_ASSISTANT_HOME=/path/to/custom/dir
-airesearch
+airi
 ```
 
-On Windows, the default is `%USERPROFILE%\.ai-research-assistant\`.
+On Windows, the default is `%USERPROFILE%\.airi\`.
 
 ---
 
@@ -228,7 +228,7 @@ On Windows, the default is `%USERPROFILE%\.ai-research-assistant\`.
 
 ### `No API key configured`
 
-Run `/setup` inside the assistant or create `~/.ai-research-assistant/.env` with at least:
+Run `/setup` inside the assistant or create `~/.airi/.env` with at least:
 
 ```env
 OPENCODE_API_KEY=your-api-key
@@ -252,7 +252,7 @@ ollama pull nomic-embed-text-v2-moe
 
 Web search requires `LANG_SEARCH_API` to be set in your config. Run `/setup` to add it.
 
-### `airesearch` command not found
+### `airi` command not found
 
 The package is not installed in your active environment. Reinstall with:
 
