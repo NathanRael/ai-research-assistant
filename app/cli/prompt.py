@@ -14,7 +14,18 @@ from prompt_toolkit.styles import Style
 from app.cli.input import CancelledInput
 from app.user_data import history_file
 
-COMMANDS = ["/add", "/list", "/debug", "/help", "/setup", "/status", "/clear", "exit", "quit"]
+COMMANDS = [
+    "/add",
+    "/list",
+    "/debug",
+    "/help",
+    "/setup",
+    "/status",
+    "/model",
+    "/clear",
+    "exit",
+    "quit",
+]
 
 _STYLE = Style.from_dict(
     {
@@ -59,7 +70,12 @@ def _key_bindings() -> KeyBindings:
     return bindings
 
 
-def _bottom_toolbar() -> HTML:
+def _bottom_toolbar(model: str = "") -> HTML:
+    if model:
+        return HTML(
+            f"<ansibrightblack>model:<b>{model}</b> · ↑↓ history · Tab complete · Ctrl+C cancel · Ctrl+D exit"
+            "</ansibrightblack>"
+        )
     return HTML(
         "<ansibrightblack>↑↓ history · Tab complete · Ctrl+C cancel · Ctrl+D exit"
         "</ansibrightblack>"
@@ -75,8 +91,8 @@ def create_session() -> PromptSession:
     )
 
 
-def read_prompt(session: PromptSession) -> str:
+def read_prompt(session: PromptSession, *, model: str = "") -> str:
     return session.prompt(
         HTML("<b><ansicyan>You</ansicyan></b> <ansigreen>❯</ansigreen> "),
-        bottom_toolbar=_bottom_toolbar(),
+        bottom_toolbar=_bottom_toolbar(model),
     )

@@ -5,6 +5,8 @@ import importlib.metadata
 import logging
 from typing import Optional
 
+import httpx
+
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import BaseMessage, HumanMessage
 
@@ -35,8 +37,100 @@ from app.tools.web_search_client import WebSearchClient
 from app.user_data import config_file, storage_dir
 
 
+_MODELS_URL = "https://opencode.ai/zen/go/v1/models"
+
+
+def _fetch_models() -> list[str] | None:
+    """Fetch available model IDs from the OpenCode API."""
+    try:
+        resp = httpx.get(_MODELS_URL, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        return [m["id"] for m in data.get("data", [])]
+    except Exception:
+        return None
+
+
+def _test_model(api_key: str, model_name: str) -> tuple[bool, str]:
+    """Send a minimal test call to verify a model works."""
+    try:
+        llm = ChatOpenCode(
+            api_key=api_key,
+            model_name=model_name,
+            temperature=0,
+            max_tokens=10,
+        )
+        response = llm.invoke([HumanMessage(content="Say OK")])
+        return True, response.content.strip()[:50]
+    except Exception as exc:
+        return False, str(exc)[:150]
+
+
+def _handle_model(
+    services: Services,
+    current_model: str,
+) -> str | None:
+    """Handle /model command. Returns the new model name or None if unchanged."""
+    api_key = settings.opencode_api_key
+    if not api_key:
+        ui.warn("Set an API key first via /setup.")
+        return None
+
+    ui.console.print("[bold cyan]Available Models[/bold cyan]")
+
+    models = _fetch_models()
+    if models:
+        ui.info(f"Fetched {len(models)} models from OpenCode.")
+        table = ui.Table(box=None, show_header=False, padding=(0, 2))
+        table.add_column(style="bold cyan", no_wrap=True)
+        table.add_column(style="dim")
+        table.add_column(style="green")
+        for index, model_id in enumerate(models, 1):
+            marker = "● current" if model_id == current_model else ""
+            table.add_row(str(index), model_id, marker)
+        ui.console.print(table)
+        ui.console.print()
+        ui.console.print("[dim]Enter a number or model name (empty to cancel).[/dim]")
+    else:
+        ui.warn("Could not fetch model list from OpenCode.")
+        ui.console.print("[dim]Enter a model name manually, or press Enter to cancel.[/dim]")
+        ui.console.print(f"[dim]Current: [bold]{current_model}[/bold][/dim]")
+
+    try:
+        choice = input("  Model> ").strip()
+    except (EOFError, KeyboardInterrupt):
+        ui.console.print()
+        return None
+
+    if not choice:
+        ui.info("Model unchanged.")
+        return None
+
+    if choice.isdigit() and models:
+        index = int(choice) - 1
+        if 0 <= index < len(models):
+            model_id = models[index]
+        else:
+            ui.error(f"Invalid number. Choose 1-{len(models)}.")
+            return None
+    else:
+        model_id = choice
+
+    if model_id == current_model:
+        ui.info(f"Already using [bold]{model_id}[/bold].")
+        return None
+
+    ui.console.print(f"\n  [dim]Testing [bold]{model_id}[/bold]...[/dim]")
+    ok, msg = _test_model(api_key, model_id)
+    if ok:
+        ui.success(f"[bold]{model_id}[/bold] is working. ({msg})")
+        return model_id
+    ui.error(f"[bold]{model_id}[/bold] failed: {msg}")
+    ui.console.print("[dim]Switching cancelled.[/dim]")
+    return None
+
+
 def _truncate(text: str, limit: int) -> str:
-    text = " ".join(str(text).split())
     if len(text) <= limit:
         return text
     return text[: limit - 3] + "..."
@@ -273,10 +367,12 @@ def main() -> None:
             model_name=settings.opencode_model,
         )
         graph = create_assistant(llm, services)
+        current_model: str = settings.opencode_model
     except Exception as exc:
         ui.error(f"Failed to initialize assistant: {ui.escape(str(exc))}")
         ui.info("Run /setup to configure your API key.")
         graph = None
+        current_model: str = settings.opencode_model or "kimi-k2.6"
 
     history: list[BaseMessage] = []
     debug = False
@@ -286,7 +382,7 @@ def main() -> None:
 
     while True:
         try:
-            user_input = read_prompt(session).strip()
+            user_input = read_prompt(session, model=current_model).strip()
         except EOFError:
             ui.console.print()
             break
@@ -298,6 +394,21 @@ def main() -> None:
             continue
 
         if not user_input:
+            continue
+        if user_input == "/model":
+            new_model = _handle_model(services, current_model)
+            if new_model and new_model != current_model and settings.opencode_api_key:
+                current_model = new_model
+                try:
+                    llm = ChatOpenCode(
+                        api_key=settings.opencode_api_key,
+                        model_name=current_model,
+                    )
+                    graph = create_assistant(llm, services)
+                    ui.success(f"Switched to [bold]{current_model}[/bold].")
+                except Exception as exc:
+                    ui.error(f"Failed to create assistant: {ui.escape(str(exc))}")
+                    graph = None
             continue
         if user_input.startswith("/"):
             debug = _handle_command(user_input, services, debug)

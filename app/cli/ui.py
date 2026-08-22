@@ -101,6 +101,7 @@ def print_help() -> None:
         ("/debug enable|disable", "Toggle tracing of routing and tool calls"),
         ("/setup", "Interactive configuration wizard"),
         ("/status", "Show current configuration and services"),
+        ("/model", "Switch to a different LLM model"),
         ("/clear", "Clear screen and reset the display"),
         ("/help", "Show this help"),
         ("exit", "Quit the assistant"),
