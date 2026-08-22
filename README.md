@@ -54,11 +54,19 @@ To install globally and manage it like a standalone tool, use `uv`:
 uv tool install .
 ```
 
-Once installed via any of the above, run `airi` from anywhere. Update a `uv tool` install later with:
+Once installed via any of the above, run `airi` from anywhere.
 
-```bash
-uv tool upgrade airi
-```
+### Updating an Installed Copy
+
+To get a newer version, pull the latest code (and bump the version in `pyproject.toml` if needed), then refresh the installed copy. Which commands you run depends on how it was installed:
+
+| Installed with | Update command |
+|---|---|
+| `uv tool install .` | `git pull` then `uv tool upgrade airi` |
+| wheel (`pip install dist/...`) | `git pull`, `uv build`, then `pip install --force-reinstall dist/airi-<new-version>-py3-none-any.whl` |
+| editable (`pip install -e .` / `uv sync`) | `git pull` then `uv sync` (editable installs always use the current source) |
+
+If the package is ever published to PyPI, `uv tool upgrade airi` automatically pulls the latest published release.
 
 ## Quick Start
 
