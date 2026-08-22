@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.agents.base_agent import BaseAgent
 from app.agents.prompts import PLAIN_TEXT_RULE
+from app.services.user_profile_service import UserProfileService
 
 GENERAL_CHOICE = "general"
 
@@ -16,19 +17,27 @@ Your only job is to route each user request to the most suitable specialist agen
 Available agents:
 {agents}
 
+Known user profile:
+{profile}
+
 Rules:
 - Pick exactly one agent for each request.
 - Prefer the specialist whose capabilities best match the user's intent.
+- Use the known user profile to interpret subtle or personal requests (e.g., "what do I like?", "remind me of my goal").
 - If the user shares personal information about themselves (facts, preferences, work, projects, habits, style), route to the agent that handles user context so it can be remembered.
 - If the user asks what you can do, how you work, or who you are, use "{general}".
 - Use "{general}" for greetings, small talk, thanks, goodbyes, or any request that can be answered directly without tools.
 """
 
-GENERAL_PROMPT = f"""You are a friendly personal assistant.
+GENERAL_PROMPT = """You are a friendly personal assistant.
 Answer the user's message directly and concisely. Do not invent personal facts about the user.
+
+Known user profile:
+{profile}
 
 Greeting behavior:
 - If the user says hello or gives a simple greeting, reply briefly and naturally. Introduce yourself as a personal assistant and invite them to ask for help.
+- If the user's name is known, use it occasionally when it feels natural; do not repeat it in every message.
 - Do not explain internal systems, memory, personalization, tools, integrations, or how you work unless the user explicitly asks.
 - Do not list features or capabilities during a simple greeting.
 - If the user explicitly asks what you can do, give a brief, helpful overview of your main areas: web search, personal context and documents, and automation.
@@ -39,10 +48,17 @@ Greeting behavior:
 class SupervisorAgent:
     """Decides which specialist agent should handle the user's request."""
 
-    def __init__(self, llm: BaseChatModel, agents: Sequence[BaseAgent]) -> None:
+    def __init__(
+        self,
+        llm: BaseChatModel,
+        agents: Sequence[BaseAgent],
+        profile_service: UserProfileService | None = None,
+    ) -> None:
         self.name = "supervisor"
         self.llm = llm
         self.agents: dict[str, BaseAgent] = {agent.name: agent for agent in agents}
+        self.profile_service = profile_service or UserProfileService()
+        self.profile = self.profile_service.load()
         self._router = self._build_router()
 
     def route(self, messages: Sequence[BaseMessage]) -> str:
@@ -55,7 +71,7 @@ class SupervisorAgent:
 
     def answer_general(self, messages: Sequence[BaseMessage]) -> AIMessage:
         """Answer directly when no specialist is needed."""
-        return self.llm.invoke([SystemMessage(content=GENERAL_PROMPT), *messages])
+        return self.llm.invoke([SystemMessage(content=self._general_prompt()), *messages])
 
     def _build_router(self):
         choices = Enum(
@@ -72,10 +88,38 @@ class SupervisorAgent:
 
         return self.llm.with_structured_output(RouteDecision, method="function_calling")
 
+    def _profile_context(self) -> str:
+        p = self.profile
+        lines = []
+        if p.name:
+            lines.append(f"Name: {p.name}")
+        if p.email:
+            lines.append(f"Email: {p.email}")
+        if p.preferences:
+            lines.append(f"Preferences: {p.preferences}")
+        if p.facts:
+            lines.append(f"Facts: {p.facts}")
+        if p.goals:
+            lines.append(f"Goals: {p.goals}")
+        context = "\n".join(lines) if lines else "No profile information available yet."
+        if not p.name:
+            context += "\n\nNote: The user's name is not known. When the user greets you or starts basic conversation, route to user_context to learn the name. For other requests, use normal routing rules."
+        return context
+
+    def _general_prompt(self) -> str:
+        return GENERAL_PROMPT.format(
+            profile=self._profile_context(),
+            PLAIN_TEXT_RULE=PLAIN_TEXT_RULE,
+        )
+
     def _system_prompt(self) -> str:
         agent_lines = []
         for name, agent in self.agents.items():
             agent_lines.append(f"- {name}: {agent.description}")
             for capability in agent.capabilities:
                 agent_lines.append(f"    - {capability}")
-        return SUPERVISOR_PROMPT.format(agents="\n".join(agent_lines), general=GENERAL_CHOICE)
+        return SUPERVISOR_PROMPT.format(
+            agents="\n".join(agent_lines),
+            general=GENERAL_CHOICE,
+            profile=self._profile_context(),
+        )

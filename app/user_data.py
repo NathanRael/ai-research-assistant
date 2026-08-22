@@ -8,9 +8,11 @@ Override: set the AI_ASSISTANT_HOME environment variable.
 """
 
 import os
+import shutil
 from pathlib import Path
 
 _APP_NAME = "airi"
+_OLD_APP_NAME = "ai-research-assistant"
 
 
 def _home_dir() -> Path:
@@ -21,7 +23,24 @@ def _home_dir() -> Path:
     else:
         base = Path.home() / f".{_APP_NAME}"
     base.mkdir(parents=True, exist_ok=True)
+    _migrate_old_data(base)
     return base
+
+
+def _old_home_dir() -> Path:
+    return Path.home() / f".{_OLD_APP_NAME}"
+
+
+def _migrate_old_data(new_base: Path) -> None:
+    """Copy profile.json and .env from old directory if they exist and new copies don't."""
+    old_base = _old_home_dir()
+    if not old_base.is_dir():
+        return
+    for name in ("profile.json", ".env"):
+        old_file = old_base / name
+        new_file = new_base / name
+        if old_file.is_file() and not new_file.is_file():
+            shutil.copy2(old_file, new_file)
 
 
 def storage_dir() -> Path:

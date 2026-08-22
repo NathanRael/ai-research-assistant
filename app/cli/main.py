@@ -162,9 +162,9 @@ def create_services() -> Services:
 def create_assistant(llm: ChatOpenCode, services: Services):
     """Build the agents and compile the assistant graph."""
     agents = [
-        WebSearchAgent(llm, WebSearchClient()),
+        WebSearchAgent(llm, WebSearchClient(), services.memory, services.profile),
         UserContextAgent(llm, services.memory, services.documents, services.profile),
-        AutomationAgent(llm, services.email),
+        AutomationAgent(llm, services.email, services.memory, services.profile),
     ]
     return build_assistant_graph(llm, agents)
 
