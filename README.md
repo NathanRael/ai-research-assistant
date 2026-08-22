@@ -10,7 +10,7 @@ Search the web, manage documents, store memories, and automate tasks — all fro
 - **User Context** — Store personal facts and preferences; the assistant remembers them across sessions.
 - **Automation** — Send emails and trigger external actions.
 - **Debug Mode** — See exactly which agent and tools are working in real time.
-- **Plain Text Output** — Clean, readable responses without Markdown formatting.
+- **Rich Markdown Output** — Formatted responses with code blocks, tables, and styling.
 
 ## Installation
 
