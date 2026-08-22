@@ -4,6 +4,7 @@ import argparse
 import ctypes
 import importlib.metadata
 import json
+import logging
 import re
 import sys
 import threading
@@ -17,6 +18,8 @@ try:
     __version__ = importlib.metadata.version("airi")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "0.2.0"
+
+logger = logging.getLogger(__name__)
 
 from app.agents.automation_agent import AutomationAgent
 from app.agents.user_context_agent import UserContextAgent
@@ -187,25 +190,30 @@ class DebugCallbackHandler(BaseCallbackHandler):
 
 def _run(graph, history: list[BaseMessage], debug: bool):
     """Run the graph once. With debug, trace routing and tool activity."""
-    if not debug:
-        result = graph.invoke({"messages": history})
-        return result["messages"][-1]
+    try:
+        if not debug:
+            result = graph.invoke({"messages": history})
+            return result["messages"][-1]
 
-    final_answer = None
-    handler = DebugCallbackHandler()
-    for update in graph.stream(
-        {"messages": history},
-        stream_mode="updates",
-        config={"callbacks": [handler]},
-    ):
-        for node, value in update.items():
-            if node == "supervisor":
-                nxt = value.get("next") if isinstance(value, dict) else None
-                if nxt:
-                    print(f"  {_c(DIM, '[route]')} {_c(BOLD, 'supervisor')} -> {_c(MAGENTA, str(nxt))}")
-            elif isinstance(value, dict) and value.get("messages"):
-                final_answer = value["messages"][-1]
-    return final_answer
+        final_answer = None
+        handler = DebugCallbackHandler()
+        for update in graph.stream(
+            {"messages": history},
+            stream_mode="updates",
+            config={"callbacks": [handler]},
+        ):
+            for node, value in update.items():
+                if node == "supervisor":
+                    nxt = value.get("next") if isinstance(value, dict) else None
+                    if nxt:
+                        print(f"  {_c(DIM, '[route]')} {_c(BOLD, 'supervisor')} -> {_c(MAGENTA, str(nxt))}")
+                elif isinstance(value, dict) and value.get("messages"):
+                    final_answer = value["messages"][-1]
+        return final_answer
+    except Exception as exc:
+        logger.debug("Graph invocation failed: %s", exc, exc_info=True)
+        print(f"\n  {_c(RED, 'A temporary error occurred.')} Please try again.")
+        return None
 
 
 def _spin(stop_event: threading.Event, label: str) -> None:
