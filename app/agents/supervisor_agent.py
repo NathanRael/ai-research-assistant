@@ -1,3 +1,5 @@
+import logging
+import re
 from enum import Enum
 from typing import Sequence
 
@@ -8,6 +10,8 @@ from pydantic import BaseModel, Field
 from app.agents.base_agent import BaseAgent
 from app.agents.prompts import PLAIN_TEXT_RULE
 from app.services.user_profile_service import UserProfileService
+
+logger = logging.getLogger(__name__)
 
 GENERAL_CHOICE = "general"
 
@@ -63,11 +67,39 @@ class SupervisorAgent:
 
     def route(self, messages: Sequence[BaseMessage]) -> str:
         """Return the name of the agent that should handle the conversation."""
-        decision = self._router.invoke(
-            [SystemMessage(content=self._system_prompt()), *messages]
+        try:
+            decision = self._router.invoke(
+                [SystemMessage(content=self._system_prompt()), *messages]
+            )
+            choice = decision.agent.value
+            return choice if choice in self.agents else GENERAL_CHOICE
+        except Exception as exc:
+            logger.debug("Structured router failed: %s", exc, exc_info=True)
+            return self._route_fallback(messages)
+
+    def _route_fallback(self, messages: Sequence[BaseMessage]) -> str:
+        """Route by plain text when the model doesn't support function calling."""
+        allowed = ", ".join([*self.agents.keys(), GENERAL_CHOICE])
+        prompt = (
+            f"{self._system_prompt()}\n\n"
+            f"You must pick exactly one agent from this list: {allowed}.\n"
+            "Respond with ONLY the chosen agent name. No explanation, no markdown."
         )
-        choice = decision.agent.value
-        return choice if choice in self.agents else GENERAL_CHOICE
+        try:
+            response = self.llm.invoke([SystemMessage(content=prompt), *messages])
+            text = str(response.content).strip().lower()
+            text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+            text = text.strip("`\"' ")
+            text = re.split(r"\s+", text)[0]
+            text = text.rstrip(".,!?:;")
+            for name in self.agents:
+                if name.lower() == text:
+                    return name
+            if text == GENERAL_CHOICE:
+                return GENERAL_CHOICE
+        except Exception as exc:
+            logger.debug("Fallback router failed: %s", exc, exc_info=True)
+        return GENERAL_CHOICE
 
     def answer_general(self, messages: Sequence[BaseMessage]) -> AIMessage:
         """Answer directly when no specialist is needed."""

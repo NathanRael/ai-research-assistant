@@ -3,6 +3,7 @@
 import argparse
 import importlib.metadata
 import logging
+import re
 from typing import Optional
 
 import httpx
@@ -66,6 +67,39 @@ def _test_model(api_key: str, model_name: str) -> tuple[bool, str]:
         return False, str(exc)[:150]
 
 
+def _is_high_token_model(model_id: str) -> bool:
+    """Flag models that are known to consume more tokens."""
+    m = model_id.lower()
+    return (
+        "gpt" in m
+        or ("deepseek" in m and "pro" in m)
+        or "qwen3.8" in m
+        or m.startswith("hy")
+        or "hy3" in m
+    )
+
+
+def _save_model(model_name: str) -> None:
+    """Persist the selected model to the user's .env config file."""
+    path = config_file()
+    if path.is_file():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        updated = False
+        new_lines: list[str] = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("OPENCODE_MODEL=") and not stripped.startswith("#"):
+                new_lines.append(f"OPENCODE_MODEL={model_name}")
+                updated = True
+            else:
+                new_lines.append(line)
+        if not updated:
+            new_lines.append(f"OPENCODE_MODEL={model_name}")
+        path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+    else:
+        path.write_text(f"OPENCODE_MODEL={model_name}\n", encoding="utf-8")
+
+
 def _handle_model(
     services: Services,
     current_model: str,
@@ -81,13 +115,16 @@ def _handle_model(
     models = _fetch_models()
     if models:
         ui.info(f"Fetched {len(models)} models from OpenCode.")
+        ui.console.print("[dim]Red label = high token usage. Selecting it asks for confirmation.[/dim]")
         table = ui.Table(box=None, show_header=False, padding=(0, 2))
         table.add_column(style="bold cyan", no_wrap=True)
         table.add_column(style="dim")
         table.add_column(style="green")
+        table.add_column(style="red")
         for index, model_id in enumerate(models, 1):
             marker = "● current" if model_id == current_model else ""
-            table.add_row(str(index), model_id, marker)
+            warning = "high tokens" if _is_high_token_model(model_id) else ""
+            table.add_row(str(index), model_id, marker, warning)
         ui.console.print(table)
         ui.console.print()
         ui.console.print("[dim]Enter a number or model name (empty to cancel).[/dim]")
@@ -120,6 +157,17 @@ def _handle_model(
         ui.info(f"Already using [bold]{model_id}[/bold].")
         return None
 
+    if _is_high_token_model(model_id):
+        ui.console.print(f"\n  [red]Warning:[/red] [bold]{model_id}[/bold] uses more tokens.")
+        try:
+            confirm = input("  Use it anyway? (y/n): ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            ui.console.print()
+            return None
+        if confirm != "y":
+            ui.info("Model unchanged.")
+            return None
+
     ui.console.print(f"\n  [dim]Testing [bold]{model_id}[/bold]...[/dim]")
     ok, msg = _test_model(api_key, model_id)
     if ok:
@@ -138,11 +186,14 @@ def _truncate(text: str, limit: int) -> str:
 
 def _to_text(content) -> str:
     if isinstance(content, str):
-        return content
-    return "".join(
-        part.get("text", "") if isinstance(part, dict) else str(part)
-        for part in content
-    )
+        text = content
+    else:
+        text = "".join(
+            part.get("text", "") if isinstance(part, dict) else str(part)
+            for part in content
+        )
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    return text.strip()
 
 
 class Services:
@@ -399,6 +450,8 @@ def main() -> None:
             new_model = _handle_model(services, current_model)
             if new_model and new_model != current_model and settings.opencode_api_key:
                 current_model = new_model
+                settings.opencode_model = current_model
+                _save_model(current_model)
                 try:
                     llm = ChatOpenCode(
                         api_key=settings.opencode_api_key,
