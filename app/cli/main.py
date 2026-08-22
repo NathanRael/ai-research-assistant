@@ -33,6 +33,7 @@ from app.services.user_profile_service import UserProfileService
 from app.tools.web_search_client import WebSearchClient
 from app.user_data import config_file, history_file, storage_dir
 from app.cli.setup import run_setup
+from app.cli.input import read_input, CancelledInput
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -367,10 +368,16 @@ def main() -> None:
 
     while True:
         try:
-            user_input = input(_c(BOLD + BLUE, "You") + " > ").strip()
-        except (EOFError, KeyboardInterrupt):
+            user_input = read_input(_c(BOLD + BLUE, "You") + " > ").strip()
+        except EOFError:
             print()
             break
+        except CancelledInput:
+            print(f"  {_c(YELLOW, 'Prompt cancelled.')}")
+            continue
+        except KeyboardInterrupt:
+            print(f"  {_c(YELLOW, 'Prompt cancelled.')}")
+            continue
 
         _save_history()
 
@@ -389,17 +396,21 @@ def main() -> None:
 
         history.append(HumanMessage(content=user_input))
 
-        if debug:
-            answer = _run(graph, history, debug=True)
-        else:
-            stop = threading.Event()
-            spinner = threading.Thread(target=_spin, args=(stop, "Thinking"), daemon=True)
-            spinner.start()
-            try:
-                answer = _run(graph, history, debug=False)
-            finally:
-                stop.set()
-                spinner.join()
+        try:
+            if debug:
+                answer = _run(graph, history, debug=True)
+            else:
+                stop = threading.Event()
+                spinner = threading.Thread(target=_spin, args=(stop, "Thinking"), daemon=True)
+                spinner.start()
+                try:
+                    answer = _run(graph, history, debug=False)
+                finally:
+                    stop.set()
+                    spinner.join()
+        except KeyboardInterrupt:
+            print(f"\n  {_c(YELLOW, 'Task cancelled.')}")
+            continue
 
         if answer is None:
             print(f"\n  {_c(RED, 'No response produced.')}\n")

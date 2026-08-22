@@ -9,7 +9,7 @@ from app.tools.automation_tools import create_automation_tools
 from app.tools.memory_tools import create_memory_tools
 from app.tools.user_profile_tools import create_user_profile_tools
 
-PROMPT = f"""You execute external actions on behalf of the user, such as sending and reading emails.
+PROMPT = """You execute external actions on behalf of the user, such as sending and reading emails.
 
 Known user context:
 {profile_context}

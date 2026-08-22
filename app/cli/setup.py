@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from app.user_data import config_file, storage_dir, history_file, documents_dir
+from app.cli.input import read_input, CancelledInput
 
 _BANNER = """
   Setup Wizard
@@ -115,8 +116,8 @@ def _prompt_value(label: str, default: str, secret: bool, help_text: str) -> str
     if default:
         print(f"  {_color_dim(f'Default: {default}')}")
     try:
-        value = input(f"  > ").strip()
-    except (EOFError, KeyboardInterrupt):
+        value = read_input("  > ").strip()
+    except (EOFError, KeyboardInterrupt, CancelledInput):
         print()
         return default
     if not value:

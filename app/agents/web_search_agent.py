@@ -13,7 +13,7 @@ from app.tools.web_search_client import WebSearchClient
 
 current_date = datetime.now().strftime("%Y-%m-%d")
 
-PROMPT = f"""You are a web search specialist.
+PROMPT = """You are a web search specialist.
 Use search_web to find current information, then answer naturally and concisely.
 
 Known user context:
@@ -68,6 +68,7 @@ class WebSearchAgent(BaseAgent):
             ),
             prompt=PROMPT.format(
                 profile_context=(info.strip() if info else "No user profile information available yet."),
+                current_date=current_date,
                 PLAIN_TEXT_RULE=PLAIN_TEXT_RULE,
             ),
         )
