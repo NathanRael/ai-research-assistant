@@ -11,7 +11,6 @@ Search the web, manage documents, store memories, and automate tasks — all fro
 - **Automation** — Send emails and read inbox with confirmation gates.
 - **Model Switching** — Fetch available models, test them, and switch at runtime with `/model`.
 - **Debug Mode** — See exactly which agent and tools are working in real time.
-- **Rich Markdown Output** — Formatted responses with code blocks, tables, and styling.
 
 ## Installation
 
@@ -25,6 +24,40 @@ uv sync
 
 # Or with pip
 pip install -e .
+```
+
+### Build and Install as a Package
+
+The project ships a console script (`airi`) via `pyproject.toml`, so it can be built into a distributable wheel and installed system-wide.
+
+```bash
+# Build the distribution (wheel + sdist)
+uv build
+
+# Or with pip/build
+python -m build
+```
+
+This produces artifacts in `dist/` (e.g. `dist/airi-0.2.0-py3-none-any.whl`). Install them into any environment:
+
+```bash
+# Install the wheel
+pip install dist/airi-0.2.0-py3-none-any.whl
+
+# Or install directly from the source tree (editable, for development)
+pip install -e .
+```
+
+To install globally and manage it like a standalone tool, use `uv`:
+
+```bash
+uv tool install .
+```
+
+Once installed via any of the above, run `airi` from anywhere. Update a `uv tool` install later with:
+
+```bash
+uv tool upgrade airi
 ```
 
 ## Quick Start
@@ -175,9 +208,6 @@ app/
 ## Development
 
 ```bash
-# Run tests
-uv run python -m pytest
-
 # Lint
 uv run ruff check .
 
