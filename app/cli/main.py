@@ -265,7 +265,7 @@ class DebugCallbackHandler(BaseCallbackHandler):
         ui.print_debug("error", _truncate(str(error), 100), label_style="red")
 
 
-def _run(graph, history: list[BaseMessage], debug: bool):
+def _run(graph, history: list[BaseMessage], debug: bool) -> Optional[BaseMessage]:
     """Run the graph once. With debug, trace routing and tool activity."""
     try:
         if not debug:
@@ -495,7 +495,10 @@ def main() -> None:
             continue
 
         history.append(answer)
-        ui.print_assistant(_to_text(answer.content))
+        if debug:
+            ui.print_assistant(_to_text(answer.content))
+        else:
+            ui.type_out(_to_text(answer.content))
 
 
 if __name__ == "__main__":
