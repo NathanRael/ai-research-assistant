@@ -8,7 +8,8 @@ Search the web, manage documents, store memories, and automate tasks — all fro
 - **Web Search** — Ask questions that need up-to-date information from the internet.
 - **Document Memory** — Add PDF, TXT, or MD files and ask questions about their content.
 - **User Context** — Store personal facts and preferences; the assistant remembers them across sessions.
-- **Automation** — Send emails and trigger external actions.
+- **Automation** — Send emails and read inbox with confirmation gates.
+- **Model Switching** — Fetch available models, test them, and switch at runtime with `/model`.
 - **Debug Mode** — See exactly which agent and tools are working in real time.
 - **Rich Markdown Output** — Formatted responses with code blocks, tables, and styling.
 
@@ -34,6 +35,13 @@ uv run python -m app.cli.main
 
 # Or after pip install -e .
 airi
+```
+
+CLI flags:
+
+```bash
+airi --version     # Display version
+airi --config-dir  # Print user data directory path
 ```
 
 For detailed installation and usage instructions, see the [Getting Started guide](docs/getting-started.md).
@@ -80,9 +88,11 @@ OLLAMA_URL=http://localhost:11434
 |---|---|
 | `/add <path>` | Add and index a document (PDF, TXT, MD) |
 | `/list` | List indexed documents |
+| `/model` | View, test, and switch LLM models at runtime |
 | `/debug enable\|disable` | Toggle tracing of routing and tool calls |
 | `/setup` | Interactive configuration wizard |
 | `/status` | Show current configuration and services |
+| `/clear` | Clear screen (chat history preserved) |
 | `/help` | Show available commands |
 | `exit` | Quit the assistant |
 
@@ -107,13 +117,13 @@ export AI_ASSISTANT_HOME=/path/to/custom/dir
 ```
 You
   ↓
-SupervisorAgent (routes to the right specialist)
-  ├── WebSearchAgent      → search_web tool
+SupervisorAgent (routes to the right specialist, or responds directly for greetings/small talk)
+  ├── WebSearchAgent      → search_web, save_memory, retrieve_memory, get_user_profile, update_user_profile
   ├── UserContextAgent    → save_memory, retrieve_memory, search_documents, list_documents, get_user_profile, update_user_profile
-  └── AutomationAgent     → preview_email, send_email, preview_read_emails, read_emails
+  └── AutomationAgent     → preview_email, send_email, preview_read_emails, read_emails, save_memory, retrieve_memory, get_user_profile, update_user_profile
 ```
 
-Each agent uses its own tools and system prompt. The supervisor decides which agent handles each request.
+Each specialist agent has access to memory and profile tools for context-aware responses. The supervisor uses structured output (function calling) to route requests, with a plain-text fallback for models that don't support it.
 
 ## Tech Stack
 
@@ -127,14 +137,39 @@ Each agent uses its own tools and system prompt. The supervisor decides which ag
 
 ```
 app/
-├── agents/           # Specialist agents and supervisor
-├── cli/              # CLI entry point and setup wizard
-├── graph/            # LangGraph workflow
-├── services/         # Business logic (memory, documents, email, embeddings, vector store)
-├── tools/            # LangChain tool factories
-├── chat_opencode.py  # LLM adapter
-├── config.py         # Settings
-└── user_data.py      # User data directory management
+├── agents/
+│   ├── base_agent.py           # Base class wrapping LLM + tools + prompt
+│   ├── supervisor_agent.py     # Routes requests to specialist agents
+│   ├── web_search_agent.py     # Live internet search agent
+│   ├── user_context_agent.py   # Memory and document agent
+│   ├── automation_agent.py     # Email automation agent
+│   └── prompts.py              # Shared prompt fragments
+├── cli/
+│   ├── main.py                 # CLI entry point and REPL
+│   ├── setup.py                # Interactive configuration wizard
+│   ├── ui.py                   # Rich console output helpers
+│   ├── prompt.py               # Prompt toolkit session
+│   └── input.py                # Input handling
+├── graph/
+│   └── workflow.py             # LangGraph supervisor workflow
+├── services/
+│   ├── document_service.py     # Document indexing and search
+│   ├── document_loader.py      # PDF/TXT/MD loading and chunking
+│   ├── memory_service.py       # Persistent user memory (Chroma)
+│   ├── user_profile_service.py # Structured user profile (JSON)
+│   ├── email_service.py        # SMTP send and IMAP read
+│   ├── vector_store.py         # ChromaDB wrapper
+│   └── embedding.py            # Ollama embedding function
+├── tools/
+│   ├── search_tools.py         # search_web tool
+│   ├── memory_tools.py         # save_memory, retrieve_memory tools
+│   ├── document_tools.py       # search_documents, list_documents tools
+│   ├── user_profile_tools.py   # get_user_profile, update_user_profile tools
+│   ├── automation_tools.py     # Email tools with safety gates
+│   └── web_search_client.py    # LangSearch API client with retry logic
+├── chat_opencode.py            # LLM adapter for OpenCode provider
+├── config.py                   # Pydantic settings management
+└── user_data.py                # User data directory (~/.airi) management
 ```
 
 ## Development
