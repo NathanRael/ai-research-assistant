@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import sys
+import time
 from contextlib import contextmanager
 from typing import Iterator
 
 from rich.console import Console, Group
+from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.rule import Rule
@@ -45,20 +47,13 @@ LOGO = [
     "╚═╝  ╚═╝  ╚═╝  ╚═╝  ╚═╝  ╚═╝",
 ]
 
-_GRADIENT = [
-    "bold bright_blue",
-    "bold cyan",
-    "bold bright_cyan",
-    "bold magenta",
-    "bold bright_magenta",
-    "bold purple",
-]
+_LOGO_STYLES = ["bold bright_blue"] * (len(LOGO) // 2) + ["bold grey74"] * (len(LOGO) - len(LOGO) // 2)
 
 
 def _logo_text() -> Text:
     text = Text()
     for index, line in enumerate(LOGO):
-        text.append(line, style=_GRADIENT[index])
+        text.append(line, style=_LOGO_STYLES[index])
         if index < len(LOGO) - 1:
             text.append("\n")
     return text
@@ -116,6 +111,31 @@ def print_assistant(text: str) -> None:
     console.print(Rule(Text("airi", style="bold cyan"), style="dim", align="left"))
     console.print(Markdown(text))
     console.print()
+
+
+def type_out(text: str) -> None:
+    """Print assistant markdown with a human-like typing effect."""
+    console.print()
+    console.print(Rule(Text("airi", style="bold cyan"), style="dim", align="left"))
+    if not text:
+        console.print()
+        return
+
+    live = Live(
+        Markdown(""),
+        console=console,
+        refresh_per_second=60,
+        vertical_overflow="ellipsis",
+    )
+    live.start()
+    try:
+        step = max(1, len(text) // 160)
+        for end in range(step, len(text) + step, step):
+            live.update(Markdown(text[:end]))
+            time.sleep(0.015)
+        live.update(Markdown(text))
+    finally:
+        live.stop()
 
 
 def print_debug(label: str, detail: str, label_style: str = "dim", detail_style: str = "") -> None:
