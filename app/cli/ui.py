@@ -59,7 +59,7 @@ def _logo_text() -> Text:
     return text
 
 
-def print_banner(version: str) -> None:
+def print_banner(version: str, copyright: str = "") -> None:
     console.print()
     console.print(
         Panel(
@@ -74,6 +74,8 @@ def print_banner(version: str) -> None:
         justify="center",
     )
     console.print(Text(f"v{version}", style="dim", justify="center"))
+    if copyright:
+        console.print(Text(copyright, style="dim", justify="center"))
     console.print(
         Text("Type /help for commands · exit to quit", style="dim", justify="center")
     )

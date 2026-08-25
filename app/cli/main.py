@@ -16,6 +16,9 @@ try:
 except importlib.metadata.PackageNotFoundError:
     __version__ = "0.2.0"
 
+_AUTHOR = "Natanaël RALAIVOAVY"
+_COPYRIGHT = f"Copyright (c) 2026 {_AUTHOR}"
+
 logger = logging.getLogger(__name__)
 
 from app.agents.automation_agent import AutomationAgent
@@ -376,7 +379,7 @@ def _handle_command(user_input: str, services: Services, debug: bool) -> bool:
         _handle_status(services)
     elif command == "/clear":
         ui.clear_screen()
-        ui.print_banner(__version__)
+        ui.print_banner(__version__, _COPYRIGHT)
         ui.success("Chat history preserved. Ready.")
     else:
         ui.error(f"Unknown command: {ui.escape(command)}. Type /help for available commands.")
@@ -390,8 +393,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--version",
-        action="version",
-        version=f"%(prog)s {__version__}",
+        action="store_true",
+        help="Show version and copyright and exit",
     )
     parser.add_argument(
         "--config-dir",
@@ -400,11 +403,16 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if args.version:
+        print(f"airi {__version__}")
+        print(_COPYRIGHT)
+        return
+
     if args.config_dir:
         print(storage_dir().parent)
         return
 
-    ui.print_banner(__version__)
+    ui.print_banner(__version__, _COPYRIGHT)
 
     services = create_services()
 

@@ -4,6 +4,7 @@ version = "0.2.0"
 description = "Multi-agent CLI personal assistant with web search, document memory, and automation"
 readme = "README.md"
 requires-python = ">=3.14"
+authors = [{ name = "Natanaël RALAIVOAVY" }]
 dependencies = [
     "httpx>=0.28.1",
     "langchain>=1.3.14",
@@ -18,6 +19,10 @@ dependencies = [
     "pypdf>=6.14.2",
     "rich>=13.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/NathanRael/ai-research-assistant"
+Repository = "https://github.com/NathanRael/ai-research-assistant"
 
 [project.scripts]
 airi = "app.cli.main:main"
